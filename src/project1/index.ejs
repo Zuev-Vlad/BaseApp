@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>Second page base config</title>
+    <link rel="icon" type="image/png" href="./favicon.ico">
+    <% for (var file in htmlWebpackPlugin.files.css) { %>
+        <% if(htmlWebpackPlugin.files.css.indexOf('htmlWebpackPlugin.options.filename')) {%>
+            <link rel="stylesheet" href="<%= htmlWebpackPlugin.files.css[file] %>">
+        <% } %>
+    <% } %>
+</head>
+<style>
+    body {
+        background-color: #fff;
+        font-family: Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-size: 14px;
+        line-height: 18px;
+        color: #000;
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+</style>
+
+<body>
+    <div id="root"></div>
+    <a><%= htmlWebpackPlugin.options.filename %></a>
+    
+    <% for (var file in htmlWebpackPlugin.files.js) { %>
+        <% if(htmlWebpackPlugin.files.js.indexOf('htmlWebpackPlugin.options.filename')) {%>
+            <script defer src="<%= htmlWebpackPlugin.files.js[file] %>"></script>
+        <% } %>
+    <% } %>
+
+   
+</body>
+
+</html>

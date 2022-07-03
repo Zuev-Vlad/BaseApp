@@ -1,110 +1,121 @@
-const path = require('path');
-const webpack = require('webpack');
+const path = require("path");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
-const defPath = {
-    build: path.resolve(__dirname, 'public/build'),
-    src: path.resolve(__dirname, 'src'),
+let mode = "development";
+let target = "web";
+if (process.env.NODE_ENV === "production") {
+  mode = "production";
+  target = "browserslist";
 }
 
-module.exports = (env, argv) => {
-    const ENV = argv.mode == 'production' ? "production" : "development"
-    console.log('mode ', ENV)
-    return {
-        entry: {
-            // enter EntryPoints (path file src, where key -> name build file), man! 
-            core: defPath.src + '/js/test/test.js',
-        },
-        output: {
-            filename: "./js/[name].js?[contenthash]",
-            path: defPath.build,
-        },
-        externals: [
-            "fs",
-            'process',
-            'child_process',
-            'worker_threads',
-            'inspector',
-            'path',
-            'crypto',
-            'stream',
-            'https',
-            'zlib',
-            'node',
-            'http',
-            'stream-http',
-            'os',
-            'vm',
-            'constants',
-            'browser'
-        ],
-        plugins: [
-            new MiniCssExtractPlugin({
-                filename: './css/[name].css',
-            }),
-            new webpack.ProvidePlugin({
-                process: 'process/browser',
-            }),
-            new webpack.DefinePlugin({
-                'process.env.NODE_ENV': JSON.stringify(ENV)
-            })
-        ],
+const entry = {
+  project1: "./src/project1/demo1.jsx",
+  project2: "./src/project2/demo2.tsx",
+};
 
-        module: {
-            rules: [{
-                    test: /\.m?js$/,
-                    exclude: /(node_modules|bower_components)/,
-                    use: {
-                        loader: 'babel-loader',
-                        options: {
-                            presets: ['@babel/preset-env', "@babel/preset-react"],
-                            plugins: ["transform-regenerator"],
-                        }
-                    }
-                },
-                {
-                    test: /\.less$/i,
-                    use: [MiniCssExtractPlugin.loader,
-                        "css-loader",
-                        "less-loader",
-                    ],
-                },
-                {
-                    test: /\.css$/i,
-                    use: [MiniCssExtractPlugin.loader,
-                        "css-loader",
-                    ],
-                },
-                {
-                    test: /\.s[ac]ss$/i,
-                    use: [
-                        "css-loader",
-                        "sass-loader",
-                    ],
-                },
-                {
-                    test: /\.(woff(2)?|ttf|eot|svg|png|jpg)(\?v=\d+\.\d+\.\d+)?$/,
-                    use: [{
-                        loader: 'url-loader',
-                    }, ]
-                },
-                {
-                    test: /\.tsx?$/,
-                    use: 'ts-loader',
-                    exclude: /node_modules/,
-                },
-            ]
-        },
-        optimization: {
-            minimizer: ENV == "production" ? [
-                '...',
-                new CssMinimizerPlugin({
-                    minify: CssMinimizerPlugin.cleanCssMinify,
-                }),
-            ] : [],
-            minimize: true,
+const plugins = [];
+
+for (let key in entry) {
+  plugins.push(
+    new HtmlWebpackPlugin({
+      template: "./src/" + key + "/index.ejs",
+      favicon: "./src/" + key + "/favicon.ico",
+      filename: `[name]/[name].html`,
+      inject: true,
+      chunks: [key],
+      templateParameters: {
+        assets: {
+          js: [`[name]/[name].js`]
         }
+      },
+      minify: {
+        removeComments: true,
+        collapseWhitespace: true,
+        removeRedundantAttributes: true,
+        useShortDoctype: true,
+        removeEmptyAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+        keepClosingSlash: true,
+        minifyJS: true,
+        minifyCSS: true,
+        minifyURLs: true,
+      },
+    })
+  );
+}
+
+if (process.env.SERVE) {
+  plugins.push(new ReactRefreshWebpackPlugin());
+}
+
+module.exports = {
+  mode,
+  target,
+  plugins,
+  devtool: "source-map",
+  entry,
+  devServer: {
+    static: "./dist",
+    hot: true,
+    proxy: {
+     "/api": {
+        target: "https://localhost:3001",
+        secure: false,
+      },
     }
+  },
+
+  output: {
+    path: path.resolve(__dirname, "dist"),
+    filename: "./[name]/[name].[hash:8].js",
+    assetModuleFilename: "[fragment]/assets/[hash][ext][query]",
+    chunkFilename: '[id].[hash:8].js',
+    clean: true,
+  },
+
+  module: {
+    rules: [
+      { test: /\.(html)$/, use: ["html-loader"] },
+      {
+        test: /\.(s[ac]|c)ss$/i,
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          "postcss-loader",
+          "sass-loader",
+        ],
+      },
+      {
+        test: /\.less$/i,
+        use: [MiniCssExtractPlugin.loader, "css-loader", "less-loader"],
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg|webp|ico)$/i,
+        type: mode === "production" ? "asset" : "asset/resource",
+      },
+      {
+        test: /\.(woff2?|eot|ttf|otf)$/i,
+        type: "asset/resource",
+      },
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            cacheDirectory: true,
+          },
+        },
+      },
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
+    ],
+  },
 };
