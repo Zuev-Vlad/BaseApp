@@ -61,12 +61,6 @@ module.exports = {
   devServer: {
     static: "./dist",
     hot: true,
-    proxy: {
-     "/api": {
-        target: "https://localhost:3001",
-        secure: false,
-      },
-    }
   },
 
   output: {
